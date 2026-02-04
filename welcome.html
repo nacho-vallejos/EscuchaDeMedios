@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXUS • Threat Intelligence Platform</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-void: #000000;
+            --cyan-primary: #00D9FF;
+            --cyan-glow: #00FFD1;
+            --magenta-primary: #FF3366;
+            --font-header: 'Syncopate', sans-serif;
+            --font-body: 'Space Mono', monospace;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--bg-void);
+            color: var(--cyan-primary);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Animated Background */
+        .background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(0, 217, 255, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 51, 102, 0.05) 0%, transparent 50%);
+            animation: bgPulse 10s ease-in-out infinite;
+        }
+
+        @keyframes bgPulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        /* Grid Lines */
+        .grid-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 217, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 217, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+        }
+
+        /* Noise Overlay */
+        .noise {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.03;
+            pointer-events: none;
+        }
+
+        /* Main Container */
+        .container {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            padding: 40px;
+            max-width: 1000px;
+        }
+
+        /* Logo Icon */
+        .logo-icon {
+            font-size: 120px;
+            color: var(--cyan-primary);
+            text-shadow: 
+                0 0 30px var(--cyan-glow),
+                0 0 60px var(--cyan-glow),
+                0 0 90px var(--cyan-glow);
+            animation: pulse 3s ease-in-out infinite;
+            display: inline-block;
+            margin-bottom: 30px;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.05); }
+        }
+
+        /* Title */
+        h1 {
+            font-family: var(--font-header);
+            font-size: 72px;
+            font-weight: 700;
+            letter-spacing: 12px;
+            color: var(--cyan-primary);
+            text-shadow: 0 0 30px var(--cyan-glow);
+            margin-bottom: 15px;
+            animation: slideDown 1s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Subtitle */
+        .subtitle {
+            font-size: 18px;
+            letter-spacing: 6px;
+            color: var(--cyan-primary);
+            opacity: 0.7;
+            margin-bottom: 10px;
+            animation: slideDown 1s ease 0.2s backwards;
+        }
+
+        /* Description */
+        .description {
+            font-size: 14px;
+            line-height: 1.8;
+            color: var(--cyan-primary);
+            opacity: 0.6;
+            margin: 40px auto;
+            max-width: 600px;
+            animation: fadeIn 1s ease 0.4s backwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 0.6; }
+        }
+
+        /* CTA Button */
+        .cta-button {
+            display: inline-block;
+            padding: 20px 50px;
+            margin-top: 30px;
+            background: rgba(0, 217, 255, 0.1);
+            border: 2px solid var(--cyan-primary);
+            color: var(--cyan-primary);
+            font-family: var(--font-header);
+            font-size: 16px;
+            letter-spacing: 4px;
+            text-decoration: none;
+            text-transform: uppercase;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            animation: slideUp 1s ease 0.6s backwards;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .cta-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 217, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .cta-button:hover::before {
+            left: 100%;
+        }
+
+        .cta-button:hover {
+            background: var(--cyan-primary);
+            color: var(--bg-void);
+            box-shadow: 
+                0 0 30px var(--cyan-glow),
+                0 0 60px var(--cyan-glow);
+            transform: translateY(-5px);
+        }
+
+        .cta-button .arrow {
+            display: inline-block;
+            margin-left: 10px;
+            transition: transform 0.3s;
+        }
+
+        .cta-button:hover .arrow {
+            transform: translateX(10px);
+        }
+
+        /* Features Grid */
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin: 60px 0;
+            animation: fadeIn 1s ease 0.8s backwards;
+        }
+
+        .feature {
+            padding: 30px;
+            background: rgba(0, 217, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 217, 255, 0.2);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .feature:hover {
+            background: rgba(0, 217, 255, 0.08);
+            border-color: var(--cyan-primary);
+            transform: translateY(-10px);
+            box-shadow: 0 10px 40px rgba(0, 217, 255, 0.2);
+        }
+
+        .feature-icon {
+            font-size: 40px;
+            margin-bottom: 15px;
+            text-shadow: 0 0 20px var(--cyan-glow);
+        }
+
+        .feature-title {
+            font-family: var(--font-header);
+            font-size: 14px;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+
+        .feature-description {
+            font-size: 12px;
+            opacity: 0.7;
+            line-height: 1.6;
+        }
+
+        /* Status Bar */
+        .status-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px;
+            background: rgba(5, 5, 16, 0.8);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(0, 217, 255, 0.2);
+            display: flex;
+            justify-content: space-around;
+            font-size: 11px;
+            letter-spacing: 2px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--cyan-primary);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--cyan-glow);
+            animation: statusPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes statusPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Glitch Effect on Hover */
+        .glitch {
+            position: relative;
+        }
+
+        .glitch:hover::before,
+        .glitch:hover::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .glitch:hover::before {
+            left: 2px;
+            text-shadow: -2px 0 #FF3366;
+            clip: rect(24px, 550px, 90px, 0);
+            animation: glitch-anim 3s infinite linear alternate-reverse;
+        }
+
+        .glitch:hover::after {
+            left: -2px;
+            text-shadow: -2px 0 #00D9FF;
+            clip: rect(85px, 550px, 140px, 0);
+            animation: glitch-anim 2s infinite linear alternate-reverse;
+        }
+
+        @keyframes glitch-anim {
+            0% { clip: rect(120px, 9999px, 80px, 0); }
+            25% { clip: rect(40px, 9999px, 140px, 0); }
+            50% { clip: rect(90px, 9999px, 30px, 0); }
+            75% { clip: rect(10px, 9999px, 100px, 0); }
+            100% { clip: rect(60px, 9999px, 20px, 0); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 48px;
+                letter-spacing: 8px;
+            }
+
+            .logo-icon {
+                font-size: 80px;
+            }
+
+            .subtitle {
+                font-size: 14px;
+                letter-spacing: 4px;
+            }
+
+            .cta-button {
+                padding: 15px 35px;
+                font-size: 14px;
+            }
+
+            .status-bar {
+                flex-direction: column;
+                gap: 15px;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Effects -->
+    <div class="background"></div>
+    <div class="grid-overlay"></div>
+    <div class="noise"></div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <div class="logo-icon">◢</div>
+        
+        <h1 class="glitch" data-text="NEXUS">NEXUS</h1>
+        
+        <div class="subtitle">THREAT INTELLIGENCE PLATFORM</div>
+        
+        <div class="description">
+            Sistema avanzado de inteligencia de amenazas cibernéticas en tiempo real. 
+            Monitoreo global de ataques, visualización 3D interactiva y análisis de seguridad de nivel empresarial.
+        </div>
+
+        <a href="/ciberataques/" class="cta-button">
+            ACCEDER AL SISTEMA
+            <span class="arrow">→</span>
+        </a>
+
+        <!-- Features Grid -->
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">🌐</div>
+                <div class="feature-title">MAPA GLOBAL 3D</div>
+                <div class="feature-description">
+                    Visualización interactiva de amenazas en tiempo real con Globe.gl y tecnología WebGL
+                </div>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon">⚡</div>
+                <div class="feature-title">ANÁLISIS EN VIVO</div>
+                <div class="feature-description">
+                    Procesamiento instantáneo de IOCs, malware y vectores de ataque desde ThreatFox API
+                </div>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon">📊</div>
+                <div class="feature-title">INTELIGENCIA VISUAL</div>
+                <div class="feature-description">
+                    Dashboards cinematográficos con gráficos avanzados y métricas de seguridad
+                </div>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon">🔒</div>
+                <div class="feature-title">NIVEL DEFCON</div>
+                <div class="feature-description">
+                    Indicadores dinámicos de nivel de amenaza y alertas automáticas de alta confianza
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+        <div class="status-item">
+            <span class="status-dot"></span>
+            <span>SISTEMA OPERACIONAL</span>
+        </div>
+        <div class="status-item">
+            <span>API: THREATFOX ABUSE.CH</span>
+        </div>
+        <div class="status-item">
+            <span>TECNOLOGÍA: GLOBE.GL • WEBGL • CHART.JS</span>
+        </div>
+        <div class="status-item">
+            <span id="time">--:--:--</span>
+        </div>
+    </div>
+
+    <script>
+        // Update time
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('time').textContent = now.toTimeString().split(' ')[0];
+        }
+        
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // Animate on load
+        window.addEventListener('load', () => {
+            document.body.style.opacity = '0';
+            setTimeout(() => {
+                document.body.style.transition = 'opacity 1s';
+                document.body.style.opacity = '1';
+            }, 100);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CYBER THREAT INTELLIGENCE - REAL-TIME FEED</title>
+    
+    <!-- Leaflet.js para el mapa -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Leaflet Heatmap Plugin -->
+    <script src="https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.min.js"></script>
+    
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <span class="logo">◢ THREAT_INTEL_SYSTEM</span>
+                <span class="status-live">● LIVE</span>
+            </div>
+            <div class="header-center">
+                <span id="current-time">--:--:--</span>
+            </div>
+            <div class="header-right">
+                <span>SOURCE: ABUSE.CH THREATFOX</span>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="main-layout">
+            <!-- Left Panel - Stats -->
+            <aside class="left-panel">
+                <div class="panel-section">
+                    <div class="panel-title">SYSTEM_STATUS</div>
+                    <div class="stat-item">
+                        <span class="stat-label">UPTIME</span>
+                        <span class="stat-value" id="uptime">00:00:00</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">THREATS_TRACKED</span>
+                        <span class="stat-value" id="threat-count">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">LAST_UPDATE</span>
+                        <span class="stat-value" id="last-update">--:--:--</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">API_STATUS</span>
+                        <span class="stat-value" id="api-status">CONNECTING...</span>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <div class="panel-title">THREAT_TYPES</div>
+                    <div id="threat-types-list"></div>
+                </div>
+
+                <div class="panel-section">
+                    <div class="panel-title">MALWARE_FAMILIES</div>
+                    <div id="malware-families-list"></div>
+                </div>
+            </aside>
+
+            <!-- Center - Map -->
+            <main class="center-panel">
+                <div class="map-container">
+                    <div id="map"></div>
+                    <div class="map-overlay">
+                        <span class="map-title">◢ GLOBAL_THREAT_MAP</span>
+                        <div class="map-controls">
+                            <button class="map-btn" id="toggle-heatmap" onclick="toggleHeatmap()">🔥 HEATMAP</button>
+                            <button class="map-btn" id="toggle-markers" onclick="toggleMarkers()">📍 MARKERS</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Leyenda de Amenazas -->
+                    <div class="threat-legend">
+                        <div class="legend-header">⚠ THREAT TYPES</div>
+                        <div class="legend-content" id="threat-legend-content">
+                            <div class="legend-item">
+                                <span class="legend-icon" style="background: #FF3333;">●</span>
+                                <div class="legend-text">
+                                    <strong>BOTNET_C&C</strong>
+                                    <span>Command & Control Server</span>
+                                </div>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-icon" style="background: #FF6B35;">●</span>
+                                <div class="legend-text">
+                                    <strong>RANSOMWARE</strong>
+                                    <span>Payment Site / Infrastructure</span>
+                                </div>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-icon" style="background: #FFB000;">●</span>
+                                <div class="legend-text">
+                                    <strong>PAYLOAD_DELIVERY</strong>
+                                    <span>Malware Distribution Point</span>
+                                </div>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-icon" style="background: #F7931E;">●</span>
+                                <div class="legend-text">
+                                    <strong>C2_SERVER</strong>
+                                    <span>Command & Control Infrastructure</span>
+                                </div>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-icon" style="background: #00FF00;">●</span>
+                                <div class="legend-text">
+                                    <strong>PHISHING</strong>
+                                    <span>Credential Harvesting Site</span>
+                                </div>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-icon" style="background: #00D9FF;">●</span>
+                                <div class="legend-text">
+                                    <strong>MALWARE_DOWNLOAD</strong>
+                                    <span>Direct Payload Download URL</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="legend-footer">
+                            <div class="heatmap-scale">
+                                <span>HEAT INTENSITY:</span>
+                                <div class="gradient-bar"></div>
+                                <div class="scale-labels">
+                                    <span>LOW</span>
+                                    <span>HIGH</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Right Panel - Details -->
+            <aside class="right-panel">
+                <div class="panel-section">
+                    <div class="panel-title">ATTACK_LOG [REAL-TIME]</div>
+                    <div class="scrollable-table">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>TIME (UTC)</th>
+                                    <th>IOC (IP/URL)</th>
+                                    <th>PORT</th>
+                                    <th>MALWARE_FAMILY</th>
+                                    <th>THREAT_TYPE</th>
+                                    <th>CONFIDENCE</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attack-log-body">
+                                <tr><td colspan="6" style="text-align: center;">LOADING_THREAT_DATA...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <div class="panel-title">LATEST_CVEs</div>
+                    <div id="cve-feed" class="log-feed">
+                        <div class="log-entry">[INFO] Connecting to CVE database...</div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+        <!-- Bottom Panel - Detailed Logs -->
+        <footer class="bottom-panel">
+            <div class="panel-section">
+                <div class="panel-title">SYSTEM_LOGS</div>
+                <div id="system-logs" class="log-feed">
+                    <div class="log-entry">[INFO] System initialized</div>
+                    <div class="log-entry">[INFO] Connecting to ThreatFox API...</div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
