@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LEXA + OSINT - Sistema Dual de Inteligencia Legal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-dark: #0f172a;
+            --primary-blue: #1e3a8a;
+            --accent-gold: #d4af37;
+            --text-light: #e2e8f0;
+            --text-dark: #1e293b;
+            --bg-card: #ffffff;
+            --border-subtle: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #312e81 100%);
+            color: var(--text-light);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 60px 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            width: 150%;
+            height: 150%;
+            background: radial-gradient(circle at 50% 50%, rgba(212, 175, 55, 0.1) 0%, transparent 70%);
+            animation: pulse 8s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.3; }
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+        }
+
+        .logo {
+            font-size: 1rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--accent-gold);
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(3rem, 8vw, 6rem);
+            font-weight: 700;
+            line-height: 1.1;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, #ffffff 0%, var(--accent-gold) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: clamp(1.1rem, 2vw, 1.5rem);
+            color: var(--text-light);
+            margin-bottom: 50px;
+            font-weight: 300;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.6;
+        }
+
+        .stats-row {
+            display: flex;
+            gap: 60px;
+            justify-content: center;
+            margin-bottom: 60px;
+            flex-wrap: wrap;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-family: 'Playfair Display', serif;
+            font-size: 4rem;
+            font-weight: 700;
+            color: var(--accent-gold);
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-light);
+            opacity: 0.8;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 18px 40px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: var(--accent-gold);
+            color: var(--primary-dark);
+            box-shadow: 0 20px 40px rgba(212, 175, 55, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 25px 50px rgba(212, 175, 55, 0.4);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-light);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-3px);
+        }
+
+        .scroll-indicator {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translate(-50%, 0); }
+            50% { transform: translate(-50%, 10px); }
+        }
+
+        /* Modules Section */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 100px 20px;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 80px;
+        }
+
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            color: #ffffff;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .section-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-light);
+            opacity: 0.8;
+        }
+
+        .modules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 40px;
+            margin-bottom: 120px;
+        }
+
+        .module-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .module-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary-blue), var(--accent-gold));
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.5s ease;
+        }
+
+        .module-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .module-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
+        }
+
+        .module-icon {
+            font-size: 3.5rem;
+            margin-bottom: 25px;
+            display: block;
+        }
+
+        .module-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            color: var(--text-dark);
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .module-description {
+            color: #64748b;
+            font-size: 1rem;
+            line-height: 1.7;
+            margin-bottom: 25px;
+        }
+
+        .module-meta {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+
+        .tech-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .tech-badge {
+            background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+            color: var(--primary-blue);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border: 1px solid var(--border-subtle);
+        }
+
+        /* Code Viewer Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .code-viewer {
+            background: #1e293b;
+            border-radius: 20px;
+            max-width: 1200px;
+            width: 100%;
+            max-height: 90vh;
+            overflow: hidden;
+            box-shadow: 0 30px 100px rgba(0, 0, 0, 0.5);
+            animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        @keyframes slideUp {
+            from { 
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .code-header {
+            padding: 30px 40px;
+            background: linear-gradient(135deg, #1e3a8a, #312e81);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .code-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .code-icon {
+            font-size: 2rem;
+        }
+
+        .btn-close {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            padding: 12px 30px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+
+        .btn-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: scale(1.05);
+        }
+
+        .code-content {
+            overflow: auto;
+            flex: 1;
+        }
+
+        pre {
+            margin: 0;
+            padding: 40px;
+            background: #1e293b !important;
+        }
+
+        pre code {
+            font-size: 0.95rem;
+            line-height: 1.8;
+            font-family: 'Fira Code', 'Courier New', monospace;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-gold);
+            border-radius: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #c49b2e;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .modules-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-row {
+                gap: 40px;
+            }
+
+            .stat-number {
+                font-size: 3rem;
+            }
+
+            h1 {
+                font-size: 3rem;
+            }
+
+            .code-viewer {
+                max-height: 80vh;
+            }
+
+            .code-header {
+                padding: 20px;
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+
+            pre {
+                padding: 20px;
+            }
+
+            pre code {
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <div class="logo">🚀 Sistema Dual</div>
+            <h1>LEXA + OSINT</h1>
+            <p class="subtitle">
+                Automatización Legal con Inteligencia Artificial + Monitoreo de Medios en Tiempo Real
+            </p>
+            
+            <div class="stats-row">
+                <div class="stat">
+                    <span class="stat-number">6</span>
+                    <span class="stat-label">Módulos</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number">4,275</span>
+                    <span class="stat-label">Líneas de Código</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number">100%</span>
+                    <span class="stat-label">Production Ready</span>
+                </div>
+            </div>
+
+            <div class="cta-buttons">
+                <a href="#modules" class="btn btn-primary">
+                    Ver Módulos
+                    <span>→</span>
+                </a>
+                <a href="/ciberataques/" class="btn btn-secondary">
+                    📊 Threat Intelligence
+                </a>
+            </div>
+        </div>
+
+        <div class="scroll-indicator">
+            <svg width="30" height="50" viewBox="0 0 30 50" fill="none">
+                <rect x="1" y="1" width="28" height="48" rx="14" stroke="white" stroke-width="2" opacity="0.5"/>
+                <circle cx="15" cy="15" r="4" fill="white" opacity="0.8">
+                    <animate attributeName="cy" values="15;35;15" dur="2s" repeatCount="indefinite"/>
+                </circle>
+            </svg>
+        </div>
+    </section>
+
+    <!-- Modules Section -->
+    <div id="modules" class="container">
+        <div class="section-header">
+            <h2 class="section-title">⚖️ LEXA</h2>
+            <p class="section-subtitle">Sistema Jurídico con Inteligencia Artificial</p>
+        </div>
+
+        <div class="modules-grid">
+            <div class="module-card" onclick="window.location.href='/demo-onboarding.html'">
+                <span class="module-icon">💬</span>
+                <h3 class="module-title">Onboarding Conversacional</h3>
+                <p class="module-description">
+                    Sistema de captación de casos laborales vía WhatsApp con IA. 
+                    Integra GPT-4 para extracción de datos, Whisper para transcripción de audio,
+                    y Vision API para análisis de documentos.
+                </p>
+                <div class="tech-stack">
+                    <span class="tech-badge">WhatsApp</span>
+                    <span class="tech-badge">GPT-4</span>
+                    <span class="tech-badge">Whisper</span>
+                </div>
+            </div>
+
+            <div class="module-card" onclick="window.location.href='/demo-matching.html'">
+                <span class="module-icon">🎯</span>
+                <h3 class="module-title">Matching Inteligente</h3>
+                <p class="module-description">
+                    Algoritmo de asignación automática de casos a abogados basado en jurisdicción,
+                    carga operativa, especialización y performance histórico con scoring ponderado.
+                </p>
+                <div class="tech-stack">
+                    <span class="tech-badge">Algoritmo ML</span>
+                    <span class="tech-badge">Scoring Inteligente</span>
+                </div>
+            </div>
+
+            <div class="module-card" onclick="window.location.href='/demo-auth.html'">
+                <span class="module-icon">🔐</span>
+                <h3 class="module-title">Autenticación & RBAC</h3>
+                <p class="module-description">
+                    Sistema completo de autenticación JWT, control de acceso basado en roles,
+                    Row-Level Security y auditoría completa. Garantiza confidencialidad y segregación de datos.
+                </p>
+                <div class="tech-stack">
+                    <span class="tech-badge">4 Roles</span>
+                    <span class="tech-badge">Auditoría en Vivo</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-header">
+            <h2 class="section-title">🔍 OSINT</h2>
+            <p class="section-subtitle">Monitoreo de Medios e Inteligencia en Tiempo Real</p>
+        </div>
+
+        <div class="modules-grid">
+            <div class="module-card" onclick="window.location.href='/demo-asr.html'">
+                <span class="module-icon">🎙️</span>
+                <h3 class="module-title">Pipeline ASR</h3>
+                <p class="module-description">
+                    Sistema de transcripción y clasificación de audio/video con Whisper y Google Speech.
+                    Incluye NLP para identificación de actores, clasificación de temas y búsqueda semántica.
+                </p>
+                <div class="tech-stack">
+                    <span class="tech-badge">Whisper</span>
+                    <span class="tech-badge">NLP</span>
+                    <span class="tech-badge">Vector Search</span>
+                </div>
+            </div>
+
+            <div class="module-card" onclick="window.location.href='/demo-sentiment.html'">
+                <span class="module-icon">📰</span>
+                <h3 class="module-title">Análisis de Sentimiento</h3>
+                <p class="module-description">
+                    Web scraping de portales argentinos con análisis de sentimiento, detección de emociones
+                    colectivas, identificación de tendencias virales y cálculo de tensión social.
+                </p>
+                <div class="tech-stack">
+                    <span class="tech-badge">Scraping</span>
+                    <span class="tech-badge">BETO NLP</span>
+                    <span class="tech-badge">Trending</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Code Viewer Modal -->
+    <div id="modalOverlay" class="modal-overlay">
+        <div class="code-viewer">
+            <div class="code-header">
+                <h2 class="code-title">
+                    <span class="code-icon" id="codeIcon">💻</span>
+                    <span id="codeTitle">Código</span>
+                </h2>
+                <button class="btn-close" onclick="closeViewer()">✕ Cerrar</button>
+            </div>
+            <div class="code-content">
+                <pre><code id="codeContent" class="language-typescript"></code></pre>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markdown.min.js"></script>
+    
+    <script>
+        const moduleCards = document.querySelectorAll('.module-card');
+        const modalOverlay = document.getElementById('modalOverlay');
+        const codeContent = document.getElementById('codeContent');
+        const codeTitle = document.getElementById('codeTitle');
+        const codeIcon = document.getElementById('codeIcon');
+
+        // Smooth scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Demo routes mapping
+        const demoRoutes = {
+            'lexa-onboarding-service.ts': '/demo-onboarding.html',
+            'lexa-matching-algorithm.ts': '/demo-matching.html',
+            'lexa-auth-rbac-middleware.ts': '/demo-auth.html',
+            'osint-asr-pipeline.py': '/demo-asr.html',
+            'osint-crawler-sentiment.py': '/demo-sentiment.html',
+            'LEXA-README.md': '/LEXA-README.md'
+        };
+
+        // Module card click handler
+        moduleCards.forEach(card => {
+            card.addEventListener('click', () => {
+                const filename = card.dataset.file;
+                const demoUrl = demoRoutes[filename];
+                
+                if (demoUrl) {
+                    // Redirigir a la demo funcional
+                    window.location.href = demoUrl;
+                } else {
+                    alert('Demo en desarrollo');
+                }
+            });
+        });
+
+        // Close modal
+        function closeViewer() {
+            modalOverlay.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Close on overlay click
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) {
+                closeViewer();
+            }
+        });
+
+        // Close on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modalOverlay.classList.contains('active')) {
+                closeViewer();
+            }
+        });
+    </script>
+</body>
+</html>

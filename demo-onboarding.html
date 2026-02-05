@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo: Onboarding WhatsApp + IA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.8;
+            font-size: 1.1rem;
+        }
+
+        .demo-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .phone-mockup {
+            background: #1e293b;
+            border-radius: 30px;
+            padding: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+
+        .phone-header {
+            background: #128C7E;
+            color: white;
+            padding: 15px;
+            border-radius: 10px 10px 0 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .phone-header img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: white;
+        }
+
+        .chat-area {
+            background: #0d1321;
+            height: 500px;
+            overflow-y: auto;
+            padding: 20px;
+            border-radius: 0 0 10px 10px;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            text-align: right;
+        }
+
+        .message-bubble {
+            display: inline-block;
+            padding: 12px 16px;
+            border-radius: 12px;
+            max-width: 70%;
+            word-wrap: break-word;
+        }
+
+        .message.bot .message-bubble {
+            background: #1e3a8a;
+            color: white;
+        }
+
+        .message.user .message-bubble {
+            background: #dcf8c6;
+            color: #000;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 12px 16px;
+            background: #1e3a8a;
+            border-radius: 12px;
+            width: fit-content;
+        }
+
+        .typing-indicator.active {
+            display: block;
+        }
+
+        .typing-indicator span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+            margin: 0 2px;
+            animation: bounce 1.4s infinite;
+        }
+
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes bounce {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-10px); }
+        }
+
+        .controls {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .controls h3 {
+            color: #1e293b;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .control-buttons {
+            display: grid;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 15px 25px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #1e3a8a, #312e81);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(30, 58, 138, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #1e293b;
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+
+        .extracted-data {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .extracted-data h3 {
+            color: #1e293b;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .data-field {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 10px;
+            border-left: 4px solid #d4af37;
+        }
+
+        .data-field label {
+            display: block;
+            font-weight: 600;
+            color: #64748b;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .data-field .value {
+            color: #1e293b;
+            font-size: 1.1rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 5px;
+        }
+
+        .badge-success { background: #dcfce7; color: #166534; }
+        .badge-warning { background: #fef3c7; color: #92400e; }
+        .badge-info { background: #dbeafe; color: #1e40af; }
+
+        .back-link {
+            display: inline-block;
+            color: white;
+            text-decoration: none;
+            padding: 12px 24px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50px;
+            margin-bottom: 30px;
+            transition: all 0.3s;
+        }
+
+        .back-link:hover {
+            background: rgba(255,255,255,0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-link">← Volver al inicio</a>
+
+        <div class="header">
+            <h1>💬 Demo: Onboarding Conversacional</h1>
+            <p>Sistema de captación de casos laborales vía WhatsApp + GPT-4</p>
+        </div>
+
+        <div class="demo-container">
+            <!-- WhatsApp Mockup -->
+            <div class="phone-mockup">
+                <div class="phone-header">
+                    <div style="width: 40px; height: 40px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">⚖️</div>
+                    <div>
+                        <div style="font-weight: 600;">LEXA Legal</div>
+                        <div style="font-size: 0.85rem; opacity: 0.8;">En línea</div>
+                    </div>
+                </div>
+                <div class="chat-area" id="chatArea">
+                    <div class="message bot">
+                        <div class="message-bubble">
+                            ¡Hola! Soy LEXA, tu asistente legal inteligente. Estoy aquí para ayudarte con tu consulta laboral. ¿Qué situación estás atravesando?
+                        </div>
+                    </div>
+                    <div class="typing-indicator" id="typingIndicator">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div>
+                <div class="controls">
+                    <h3>Simular Casos</h3>
+                    <div class="control-buttons">
+                        <button class="btn btn-primary" onclick="simulateDespido()">
+                            🚪 Despido sin Causa
+                        </button>
+                        <button class="btn btn-primary" onclick="simulateAccidente()">
+                            🏥 Accidente de Trabajo
+                        </button>
+                        <button class="btn btn-primary" onclick="simulateAcoso()">
+                            ⚠️ Acoso Laboral
+                        </button>
+                        <button class="btn btn-secondary" onclick="resetChat()">
+                            🔄 Reiniciar Chat
+                        </button>
+                    </div>
+                </div>
+
+                <div class="extracted-data" style="margin-top: 20px;">
+                    <h3>📊 Datos Extraídos por IA</h3>
+                    <div id="extractedDataContainer">
+                        <p style="color: #64748b; text-align: center; padding: 20px;">
+                            Los datos se mostrarán aquí una vez que simules un caso
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const chatArea = document.getElementById('chatArea');
+        const typingIndicator = document.getElementById('typingIndicator');
+        const extractedDataContainer = document.getElementById('extractedDataContainer');
+
+        function addMessage(text, isUser = false) {
+            const message = document.createElement('div');
+            message.className = `message ${isUser ? 'user' : 'bot'}`;
+            message.innerHTML = `<div class="message-bubble">${text}</div>`;
+            chatArea.insertBefore(message, typingIndicator);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        function showTyping() {
+            typingIndicator.classList.add('active');
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        function hideTyping() {
+            typingIndicator.classList.remove('active');
+        }
+
+        async function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        async function simulateDespido() {
+            addMessage("Me despidieron sin causa hace 2 semanas", true);
+            await delay(1000);
+            
+            showTyping();
+            await delay(2000);
+            hideTyping();
+            addMessage("Entiendo tu situación. Para ayudarte mejor, necesito algunos datos. ¿Cuánto tiempo trabajaste en esa empresa?");
+            
+            await delay(1500);
+            addMessage("5 años y 3 meses", true);
+            
+            await delay(1000);
+            showTyping();
+            await delay(2500);
+            hideTyping();
+            addMessage("Perfecto. ¿Cuál era tu último salario bruto mensual?");
+            
+            await delay(1500);
+            addMessage("$850.000 por mes", true);
+            
+            await delay(1000);
+            showTyping();
+            await delay(3000);
+            hideTyping();
+            addMessage("¿Recibiste alguna liquidación o indemnización de la empresa?");
+            
+            await delay(1500);
+            addMessage("No, no me pagaron nada todavía", true);
+            
+            await delay(1000);
+            showTyping();
+            await delay(3500);
+            hideTyping();
+            addMessage("✅ Gracias por la información. He analizado tu caso:\n\n📋 <b>Resumen:</b> Despido sin causa - 5 años de antigüedad\n💰 <b>Indemnización estimada:</b> $4.675.000 - $5.525.000\n\nTu caso tiene alta viabilidad legal. Un abogado especializado te contactará en las próximas 24 horas.");
+
+            // Mostrar datos extraídos
+            extractedDataContainer.innerHTML = `
+                <div class="data-field">
+                    <label>Tipo de Reclamo</label>
+                    <div class="value">
+                        <span class="badge badge-warning">Despido sin Causa</span>
+                    </div>
+                </div>
+                <div class="data-field">
+                    <label>Antigüedad</label>
+                    <div class="value">5 años, 3 meses</div>
+                </div>
+                <div class="data-field">
+                    <label>Salario Mensual</label>
+                    <div class="value">$850.000</div>
+                </div>
+                <div class="data-field">
+                    <label>Liquidación Recibida</label>
+                    <div class="value">No</div>
+                </div>
+                <div class="data-field">
+                    <label>Viabilidad Legal</label>
+                    <div class="value">
+                        <span class="badge badge-success">Alta - 92%</span>
+                    </div>
+                </div>
+                <div class="data-field">
+                    <label>Monto Estimado</label>
+                    <div class="value" style="font-size: 1.5rem; font-weight: 700; color: #166534;">
+                        $4.675.000 - $5.525.000
+                    </div>
+                </div>
+            `;
+        }
+
+        async function simulateAccidente() {
+            addMessage("Tuve un accidente en el trabajo hace 1 mes", true);
+            await delay(1000);
+            
+            showTyping();
+            await delay(2000);
+            hideTyping();
+            addMessage("Lamento mucho lo que te pasó. ¿Qué tipo de lesión sufriste?");
+            
+            await delay(1500);
+            addMessage("Me caí de una escalera y me fracturé el brazo derecho", true);
+            
+            await delay(1000);
+            showTyping();
+            await delay(2500);
+            hideTyping();
+            addMessage("¿La empresa te dio los elementos de protección adecuados?");
+            
+            await delay(1500);
+            addMessage("No, la escalera no tenía barandas y no me dieron arnés", true);
+            
+            await delay(1000);
+            showTyping();
+            await delay(3000);
+            hideTyping();
+            addMessage("¿Te hicieron la denuncia ante la ART (Aseguradora de Riesgos del Trabajo)?");
+            
+            await delay(1500);
+            addMessage("Sí, pero la ART solo me cubre el 50% de incapacidad cuando el médico dice que es 75%", true);
+            
+            await delay(1000);
+            showTyping();
+            await delay(3500);
+            hideTyping();
+            addMessage("✅ Tu caso presenta elementos muy importantes:\n\n📋 <b>Resumen:</b> Accidente laboral con negligencia del empleador\n💰 <b>Reclamo estimado:</b> $8.200.000 - $12.500.000\n⚠️ <b>Factores clave:</b> Falta de medidas de seguridad + Subdeterminación de ART\n\nTienes un caso sólido. Te asignaremos un abogado especialista en accidentes de trabajo.");
+
+            extractedDataContainer.innerHTML = `
+                <div class="data-field">
+                    <label>Tipo de Reclamo</label>
+                    <div class="value">
+                        <span class="badge badge-warning">Accidente de Trabajo</span>
+                        <span class="badge badge-info">Negligencia</span>
+                    </div>
+                </div>
+                <div class="data-field">
+                    <label>Lesión</label>
+                    <div class="value">Fractura de brazo derecho</div>
+                </div>
+                <div class="data-field">
+                    <label>Incapacidad Real</label>
+                    <div class="value">75% (subdeterminada por ART al 50%)</div>
+                </div>
+                <div class="data-field">
+                    <label>Elementos de Seguridad</label>
+                    <div class="value" style="color: #dc2626;">No provistos - RESPONSABILIDAD DEL EMPLEADOR</div>
+                </div>
+                <div class="data-field">
+                    <label>Viabilidad Legal</label>
+                    <div class="value">
+                        <span class="badge badge-success">Muy Alta - 96%</span>
+                    </div>
+                </div>
+                <div class="data-field">
+                    <label>Monto Estimado</label>
+                    <div class="value" style="font-size: 1.5rem; font-weight: 700; color: #166534;">
+                        $8.200.000 - $12.500.000
+                    </div>
+                </div>
+            `;
+        }
+
+        async function simulateAcoso() {
+            addMessage("Mi jefe me acosa y me hace comentarios inapropiados constantemente", true);
+            await delay(1000);
+            
+            showTyping();
+            await delay(2500);
+            hideTyping();
+            addMessage("Entiendo lo difícil que debe ser esta situación. Es importante documentar todo. ¿Desde cuándo ocurre esto?");
+            
+            await delay(1500);
+            addMessage("Hace 8 meses. Tengo mensajes de WhatsApp y emails como prueba", true);
+            
+            await delay(1000);
+            showTyping();
+            await delay(2000);
+            hideTyping();
+            addMessage("Excelente que hayas guardado evidencia. ¿Hay testigos de estos comportamientos?");
+            
+            await delay(1500);
+            addMessage("Sí, mis compañeros han visto varias situaciones. Una compañera también sufre lo mismo", true);
+            
+            await delay(1000);
+            showTyping();
+            await delay(3000);
+            hideTyping();
+            addMessage("¿Hiciste alguna denuncia formal ante RRHH o la empresa?");
+            
+            await delay(1500);
+            addMessage("Sí, pero no hicieron nada. Me dijeron que 'es su forma de ser'", true);
+            
+            await delay(1000);
+            showTyping();
+            await delay(4000);
+            hideTyping();
+            addMessage("✅ Tu situación constituye acoso laboral (mobbing) con agravantes:\n\n📋 <b>Elementos probatorios:</b>\n• Mensajes y emails (prueba documental)\n• Testigos directos\n• Denuncia sin respuesta de la empresa\n\n💰 <b>Posibles reclamos:</b>\n• Indemnización agravada por acoso\n• Daño moral\n• Despido indirecto (art. 246 LCT)\n• Posible denuncia penal\n\n<b>Rango estimado:</b> $6.500.000 - $15.000.000\n\nUrgente: Te contactaremos hoy mismo. Este caso requiere acción inmediata.");
+
+            extractedDataContainer.innerHTML = `
+                <div class="data-field">
+                    <label>Tipo de Reclamo</label>
+                    <div class="value">
+                        <span class="badge badge-warning">Acoso Laboral (Mobbing)</span>
+                    </div>
+                </div>
+                <div class="data-field">
+                    <label>Duración</label>
+                    <div class="value">8 meses</div>
+                </div>
+                <div class="data-field">
+                    <label>Pruebas Disponibles</label>
+                    <div class="value">
+                        <span class="badge badge-success">WhatsApp</span>
+                        <span class="badge badge-success">Emails</span>
+                        <span class="badge badge-success">Testigos</span>
+                    </div>
+                </div>
+                <div class="data-field">
+                    <label>Denuncia Previa</label>
+                    <div class="value">Sí - Sin respuesta de la empresa (AGRAVANTE)</div>
+                </div>
+                <div class="data-field">
+                    <label>Viabilidad Legal</label>
+                    <div class="value">
+                        <span class="badge badge-success">Muy Alta - 94%</span>
+                    </div>
+                </div>
+                <div class="data-field">
+                    <label>Urgencia</label>
+                    <div class="value" style="color: #dc2626; font-weight: 700;">
+                        ALTA - Requiere acción inmediata
+                    </div>
+                </div>
+                <div class="data-field">
+                    <label>Monto Estimado</label>
+                    <div class="value" style="font-size: 1.5rem; font-weight: 700; color: #166534;">
+                        $6.500.000 - $15.000.000
+                    </div>
+                </div>
+            `;
+        }
+
+        function resetChat() {
+            chatArea.innerHTML = `
+                <div class="message bot">
+                    <div class="message-bubble">
+                        ¡Hola! Soy LEXA, tu asistente legal inteligente. Estoy aquí para ayudarte con tu consulta laboral. ¿Qué situación estás atravesando?
+                    </div>
+                </div>
+                <div class="typing-indicator" id="typingIndicator">
+                    <span></span><span></span><span></span>
+                </div>
+            `;
+            
+            extractedDataContainer.innerHTML = `
+                <p style="color: #64748b; text-align: center; padding: 20px;">
+                    Los datos se mostrarán aquí una vez que simules un caso
+                </p>
+            `;
+        }
+    </script>
+</body>
+</html>

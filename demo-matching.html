@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo: Matching Inteligente</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .back-link {
+            display: inline-block;
+            color: white;
+            text-decoration: none;
+            padding: 12px 24px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50px;
+            margin-bottom: 30px;
+            transition: all 0.3s;
+        }
+
+        .back-link:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .case-card {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .case-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 20px;
+        }
+
+        .case-title {
+            font-size: 1.5rem;
+            color: #1e293b;
+            font-weight: 700;
+        }
+
+        .badge {
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .badge-urgent { background: #fee2e2; color: #991b1b; }
+        .badge-high { background: #fef3c7; color: #92400e; }
+        .badge-normal { background: #dbeafe; color: #1e40af; }
+
+        .case-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .meta-item {
+            padding: 12px;
+            background: #f8fafc;
+            border-radius: 8px;
+        }
+
+        .meta-label {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+
+        .meta-value {
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .lawyers-grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .lawyer-card {
+            background: #f8fafc;
+            padding: 25px;
+            border-radius: 15px;
+            border: 3px solid transparent;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .lawyer-card.best-match {
+            border-color: #d4af37;
+            background: linear-gradient(135deg, #fffbeb, #fef3c7);
+        }
+
+        .lawyer-card.best-match::before {
+            content: '⭐ MEJOR MATCH';
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            background: #d4af37;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .lawyer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+
+        .lawyer-info h3 {
+            color: #1e293b;
+            font-size: 1.3rem;
+            margin-bottom: 5px;
+        }
+
+        .lawyer-location {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        .score-badge {
+            background: #1e3a8a;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-align: center;
+            min-width: 80px;
+        }
+
+        .score-label {
+            font-size: 0.75rem;
+            opacity: 0.9;
+        }
+
+        .scoring-breakdown {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .score-item {
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .score-bar {
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 5px 0;
+        }
+
+        .score-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #1e3a8a, #d4af37);
+            transition: width 1s ease;
+        }
+
+        .lawyer-stats {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1e3a8a;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+
+        .btn-assign {
+            background: linear-gradient(135deg, #1e3a8a, #312e81);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 15px;
+            transition: all 0.3s;
+        }
+
+        .btn-assign:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(30, 58, 138, 0.3);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top-color: #d4af37;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-link">← Volver al inicio</a>
+
+        <div class="header">
+            <h1>🎯 Demo: Matching Inteligente</h1>
+            <p>Algoritmo de asignación automática con scoring ponderado</p>
+        </div>
+
+        <div class="case-card">
+            <div class="case-header">
+                <div>
+                    <h2 class="case-title">Caso #2024-0847</h2>
+                    <p style="color: #64748b; margin-top: 5px;">Trabajador: María González</p>
+                </div>
+                <span class="badge badge-high">Alta Complejidad</span>
+            </div>
+
+            <div class="case-meta">
+                <div class="meta-item">
+                    <div class="meta-label">Tipo de Caso</div>
+                    <div class="meta-value">Despido Discriminatorio</div>
+                </div>
+                <div class="meta-item">
+                    <div class="meta-label">Jurisdicción</div>
+                    <div class="meta-value">CABA - Fuero Nacional</div>
+                </div>
+                <div class="meta-item">
+                    <div class="meta-label">Monto Estimado</div>
+                    <div class="meta-value">$8.500.000</div>
+                </div>
+                <div class="meta-item">
+                    <div class="meta-label">Urgencia</div>
+                    <div class="meta-value">Alta (15 días)</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="loadingContainer" class="loading">
+            <div class="loading-spinner"></div>
+            <h3>Analizando abogados disponibles...</h3>
+            <p>Calculando scores basados en 5 criterios</p>
+        </div>
+
+        <div id="lawyersContainer" style="display: none;"></div>
+    </div>
+
+    <script>
+        const lawyers = [
+            {
+                name: 'Dr. Ricardo Martínez',
+                location: 'CABA - Capital Federal',
+                jurisdictions: ['CABA', 'Buenos Aires'],
+                specializations: ['Despido', 'Discriminación', 'Daño Moral'],
+                casosActivos: 8,
+                capacidad: 15,
+                winRate: 87,
+                casosGanados: 142,
+                experiencia: 15,
+                scores: {
+                    jurisdiccion: 100,
+                    workload: 95,
+                    especializacion: 98,
+                    performance: 87,
+                    experiencia: 90
+                }
+            },
+            {
+                name: 'Dra. Ana Fernández',
+                location: 'La Plata - Buenos Aires',
+                jurisdictions: ['Buenos Aires', 'La Plata'],
+                specializations: ['Accidentes', 'ART'],
+                casosActivos: 12,
+                capacidad: 12,
+                winRate: 82,
+                casosGanados: 98,
+                experiencia: 12,
+                scores: {
+                    jurisdiccion: 65,
+                    workload: 50,
+                    especializacion: 45,
+                    performance: 82,
+                    experiencia: 75
+                }
+            },
+            {
+                name: 'Dr. Carlos López',
+                location: 'CABA - Capital Federal',
+                jurisdictions: ['CABA'],
+                specializations: ['Despido', 'Acoso Laboral'],
+                casosActivos: 15,
+                capacidad: 15,
+                winRate: 79,
+                casosGanados: 156,
+                experiencia: 18,
+                scores: {
+                    jurisdiccion: 100,
+                    workload: 45,
+                    especializacion: 85,
+                    performance: 79,
+                    experiencia: 95
+                }
+            },
+            {
+                name: 'Dra. Lucía Romero',
+                location: 'CABA - Belgrano',
+                jurisdictions: ['CABA', 'Buenos Aires'],
+                specializations: ['Discriminación', 'Género', 'Despido'],
+                casosActivos: 6,
+                capacidad: 10,
+                winRate: 91,
+                casosGanados: 87,
+                experiencia: 10,
+                scores: {
+                    jurisdiccion: 100,
+                    workload: 100,
+                    especializacion: 95,
+                    performance: 91,
+                    experiencia: 70
+                }
+            }
+        ];
+
+        function calculateTotalScore(lawyer) {
+            const weights = {
+                jurisdiccion: 0.35,
+                workload: 0.25,
+                especializacion: 0.20,
+                performance: 0.15,
+                experiencia: 0.05
+            };
+
+            let total = 0;
+            for (let [key, weight] of Object.entries(weights)) {
+                total += lawyer.scores[key] * weight;
+            }
+
+            return Math.round(total);
+        }
+
+        function renderLawyers() {
+            // Calcular scores totales
+            lawyers.forEach(lawyer => {
+                lawyer.totalScore = calculateTotalScore(lawyer);
+            });
+
+            // Ordenar por score
+            lawyers.sort((a, b) => b.totalScore - a.totalScore);
+
+            const container = document.getElementById('lawyersContainer');
+            container.innerHTML = lawyers.map((lawyer, index) => `
+                <div class="lawyer-card ${index === 0 ? 'best-match' : ''}">
+                    <div class="lawyer-header">
+                        <div class="lawyer-info">
+                            <h3>${lawyer.name}</h3>
+                            <div class="lawyer-location">📍 ${lawyer.location}</div>
+                            <div style="margin-top: 8px;">
+                                ${lawyer.specializations.map(s => 
+                                    `<span style="display: inline-block; padding: 4px 10px; background: #e0e7ff; color: #3730a3; border-radius: 12px; font-size: 0.8rem; margin-right: 5px;">${s}</span>`
+                                ).join('')}
+                            </div>
+                        </div>
+                        <div class="score-badge">
+                            ${lawyer.totalScore}
+                            <div class="score-label">SCORE</div>
+                        </div>
+                    </div>
+
+                    <div class="scoring-breakdown">
+                        <div class="score-item">
+                            <div style="font-size: 0.8rem; color: #64748b;">Jurisdicción (35%)</div>
+                            <div class="score-bar">
+                                <div class="score-fill" style="width: ${lawyer.scores.jurisdiccion}%"></div>
+                            </div>
+                            <div style="font-weight: 600; font-size: 0.9rem;">${lawyer.scores.jurisdiccion}</div>
+                        </div>
+                        <div class="score-item">
+                            <div style="font-size: 0.8rem; color: #64748b;">Carga (25%)</div>
+                            <div class="score-bar">
+                                <div class="score-fill" style="width: ${lawyer.scores.workload}%"></div>
+                            </div>
+                            <div style="font-weight: 600; font-size: 0.9rem;">${lawyer.scores.workload}</div>
+                        </div>
+                        <div class="score-item">
+                            <div style="font-size: 0.8rem; color: #64748b;">Especialización (20%)</div>
+                            <div class="score-bar">
+                                <div class="score-fill" style="width: ${lawyer.scores.especializacion}%"></div>
+                            </div>
+                            <div style="font-weight: 600; font-size: 0.9rem;">${lawyer.scores.especializacion}</div>
+                        </div>
+                        <div class="score-item">
+                            <div style="font-size: 0.8rem; color: #64748b;">Performance (15%)</div>
+                            <div class="score-bar">
+                                <div class="score-fill" style="width: ${lawyer.scores.performance}%"></div>
+                            </div>
+                            <div style="font-weight: 600; font-size: 0.9rem;">${lawyer.scores.performance}</div>
+                        </div>
+                        <div class="score-item">
+                            <div style="font-size: 0.8rem; color: #64748b;">Experiencia (5%)</div>
+                            <div class="score-bar">
+                                <div class="score-fill" style="width: ${lawyer.scores.experiencia}%"></div>
+                            </div>
+                            <div style="font-weight: 600; font-size: 0.9rem;">${lawyer.scores.experiencia}</div>
+                        </div>
+                    </div>
+
+                    <div class="lawyer-stats">
+                        <div class="stat">
+                            <div class="stat-number">${lawyer.casosActivos}/${lawyer.capacidad}</div>
+                            <div class="stat-label">Casos Activos</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-number">${lawyer.winRate}%</div>
+                            <div class="stat-label">Tasa de Éxito</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-number">${lawyer.casosGanados}</div>
+                            <div class="stat-label">Casos Ganados</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-number">${lawyer.experiencia} años</div>
+                            <div class="stat-label">Experiencia</div>
+                        </div>
+                    </div>
+
+                    <button class="btn-assign" onclick="assignCase('${lawyer.name}')">
+                        ${index === 0 ? '⭐ Asignar Caso (Recomendado)' : 'Asignar Caso'}
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function assignCase(lawyerName) {
+            alert(`✅ Caso asignado exitosamente a ${lawyerName}\n\n📧 Notificación enviada\n📱 WhatsApp automático programado\n📊 Dashboard actualizado`);
+        }
+
+        // Simular loading
+        setTimeout(() => {
+            document.getElementById('loadingContainer').style.display = 'none';
+            document.getElementById('lawyersContainer').style.display = 'block';
+            renderLawyers();
+        }, 2500);
+    </script>
+</body>
+</html>

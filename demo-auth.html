@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo: Autenticación & RBAC</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { text-align: center; color: white; margin-bottom: 40px; }
+        .header h1 { font-size: 2.5rem; margin-bottom: 10px; }
+        .back-link {
+            display: inline-block; color: white; text-decoration: none;
+            padding: 12px 24px; background: rgba(255,255,255,0.1);
+            border-radius: 50px; margin-bottom: 30px; transition: all 0.3s;
+        }
+        .back-link:hover { background: rgba(255,255,255,0.2); }
+        .panel { background: white; padding: 30px; border-radius: 20px; margin-bottom: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
+        .role-card {
+            padding: 20px; background: #f8fafc; border-radius: 12px;
+            margin-bottom: 15px; border-left: 4px solid;
+        }
+        .role-card.admin { border-color: #dc2626; }
+        .role-card.abogado { border-color: #d4af37; }
+        .role-card.backoffice { border-color: #2563eb; }
+        .role-card.trabajador { border-color: #16a34a; }
+        .permissions { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 15px; }
+        .permission { padding: 8px 12px; background: white; border-radius: 8px; font-size: 0.85rem; }
+        .audit-log { background: #1e293b; color: #e2e8f0; padding: 15px; border-radius: 10px; font-family: monospace; font-size: 0.85rem; max-height: 300px; overflow-y: auto; }
+        .log-entry { padding: 8px; border-bottom: 1px solid #334155; }
+        .log-success { color: #86efac; }
+        .log-warning { color: #fbbf24; }
+        .log-error { color: #fca5a5; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        th { background: #f8fafc; font-weight: 600; }
+        .badge { padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; }
+        .badge-success { background: #dcfce7; color: #166534; }
+        .badge-danger { background: #fee2e2; color: #991b1b; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-link">← Volver al inicio</a>
+        <div class="header">
+            <h1>🔐 Demo: Autenticación & RBAC</h1>
+            <p>Sistema de control de acceso basado en roles con auditoría completa</p>
+        </div>
+
+        <div class="panel">
+            <h2 style="margin-bottom: 20px;">👥 Roles y Permisos</h2>
+            
+            <div class="role-card admin">
+                <h3 style="color: #991b1b; margin-bottom: 10px;">👑 ADMIN - Acceso Total</h3>
+                <p style="color: #64748b; margin-bottom: 10px;">Acceso completo al sistema, configuración y gestión de usuarios</p>
+                <div class="permissions">
+                    <div class="permission">✅ caso:read</div>
+                    <div class="permission">✅ caso:create</div>
+                    <div class="permission">✅ caso:update</div>
+                    <div class="permission">✅ caso:delete</div>
+                    <div class="permission">✅ caso:assign</div>
+                    <div class="permission">✅ abogado:*</div>
+                    <div class="permission">✅ auditoria:read</div>
+                    <div class="permission">✅ config:manage</div>
+                </div>
+            </div>
+
+            <div class="role-card abogado">
+                <h3 style="color: #92400e; margin-bottom: 10px;">⚖️ ABOGADO - Solo su Estudio</h3>
+                <p style="color: #64748b; margin-bottom: 10px;">Acceso restringido a casos asignados a su estudio jurídico</p>
+                <div class="permissions">
+                    <div class="permission">✅ caso:read (solo su estudio)</div>
+                    <div class="permission">✅ caso:update</div>
+                    <div class="permission">✅ documento:read</div>
+                    <div class="permission">✅ documento:upload</div>
+                    <div class="permission">✅ pago:read</div>
+                    <div class="permission">❌ caso:assign</div>
+                    <div class="permission">❌ abogado:create</div>
+                </div>
+            </div>
+
+            <div class="role-card backoffice">
+                <h3 style="color: #1e40af; margin-bottom: 10px;">📋 BACKOFFICE - Operativo</h3>
+                <p style="color: #64748b; margin-bottom: 10px;">Gestión operativa sin acceso a documentos sensibles</p>
+                <div class="permissions">
+                    <div class="permission">✅ caso:read</div>
+                    <div class="permission">✅ caso:create</div>
+                    <div class="permission">✅ caso:assign</div>
+                    <div class="permission">✅ trabajador:read</div>
+                    <div class="permission">❌ documento:read</div>
+                    <div class="permission">❌ abogado:create</div>
+                </div>
+            </div>
+
+            <div class="role-card trabajador">
+                <h3 style="color: #15803d; margin-bottom: 10px;">👤 TRABAJADOR - Solo su Caso</h3>
+                <p style="color: #64748b; margin-bottom: 10px;">Acceso únicamente a su propio expediente</p>
+                <div class="permissions">
+                    <div class="permission">✅ caso:read (solo el suyo)</div>
+                    <div class="permission">✅ documento:read</div>
+                    <div class="permission">✅ documento:upload</div>
+                    <div class="permission">✅ pago:read</div>
+                    <div class="permission">❌ caso:update</div>
+                    <div class="permission">❌ Todos los demás</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2 style="margin-bottom: 20px;">📊 Intentos de Acceso (Tiempo Real)</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Usuario</th>
+                        <th>Acción</th>
+                        <th>Recurso</th>
+                        <th>Estado</th>
+                        <th>Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>dra.martinez@lexa.com.ar</td>
+                        <td>caso:read</td>
+                        <td>Caso #2024-0847</td>
+                        <td><span class="badge badge-success">✓ Permitido</span></td>
+                        <td>15:42:12</td>
+                    </tr>
+                    <tr>
+                        <td>dr.lopez@lexa.com.ar</td>
+                        <td>documento:delete</td>
+                        <td>Doc #8472</td>
+                        <td><span class="badge badge-danger">✗ Denegado</span></td>
+                        <td>15:41:55</td>
+                    </tr>
+                    <tr>
+                        <td>backoffice@lexa.com.ar</td>
+                        <td>caso:assign</td>
+                        <td>Caso #2024-0846</td>
+                        <td><span class="badge badge-success">✓ Permitido</span></td>
+                        <td>15:40:33</td>
+                    </tr>
+                    <tr>
+                        <td>maria.gonzalez@gmail.com</td>
+                        <td>caso:read</td>
+                        <td>Caso #2024-0741</td>
+                        <td><span class="badge badge-danger">✗ Denegado (no es su caso)</span></td>
+                        <td>15:39:18</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="panel">
+            <h2 style="margin-bottom: 20px;">📜 Log de Auditoría en Vivo</h2>
+            <div class="audit-log" id="auditLog">
+                <div class="log-entry log-success">[15:42:12] ✓ LOGIN | dra.martinez@lexa.com.ar | IP: 192.168.1.45 | Role: ABOGADO</div>
+                <div class="log-entry log-success">[15:42:14] ✓ CASO_VIEW | Usuario: dra.martinez@lexa.com.ar | Caso: #2024-0847 | Estudio: Martínez & Asoc.</div>
+                <div class="log-entry log-success">[15:42:18] ✓ DOCUMENTO_VIEW | Usuario: dra.martinez@lexa.com.ar | Doc: telegrama_despido.pdf</div>
+                <div class="log-entry log-error">[15:41:55] ✗ PERMISSION_DENIED | Usuario: dr.lopez@lexa.com.ar | Acción: documento:delete | Recurso: Doc #8472</div>
+                <div class="log-entry log-warning">[15:41:22] ⚠ UNAUTHORIZED_ACCESS | Usuario: unknown@test.com | IP: 45.33.21.89 | Intentos: 3</div>
+                <div class="log-entry log-success">[15:40:33] ✓ CASO_ASSIGN | Usuario: backoffice@lexa.com.ar | Caso: #2024-0846 | Abogado: Dr. Romero</div>
+                <div class="log-entry log-error">[15:39:18] ✗ TENANCY_VIOLATION | Usuario: maria.gonzalez@gmail.com | Intentó acceder a Caso #2024-0741 (otro tenant)</div>
+                <div class="log-entry log-success">[15:38:45] ✓ PAGO_CREATE | Usuario: admin@lexa.com.ar | Monto: $850.000 | Caso: #2024-0820</div>
+            </div>
+            <p style="margin-top: 15px; color: #64748b; font-size: 0.9rem;">
+                ⏱️ Actualización en tiempo real | 🔒 Registro inmutable | 📊 Análisis de patrones sospechosos activo
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Simular logs en tiempo real
+        const logColors = ['log-success', 'log-warning', 'log-error'];
+        const actions = [
+            { text: 'LOGIN', type: 'log-success' },
+            { text: 'CASO_VIEW', type: 'log-success' },
+            { text: 'DOCUMENTO_UPLOAD', type: 'log-success' },
+            { text: 'PERMISSION_DENIED', type: 'log-error' },
+            { text: 'UNAUTHORIZED_ACCESS', type: 'log-warning' }
+        ];
+
+        setInterval(() => {
+            const action = actions[Math.floor(Math.random() * actions.length)];
+            const time = new Date().toLocaleTimeString('es-AR');
+            const auditLog = document.getElementById('auditLog');
+            
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${action.type}`;
+            entry.textContent = `[${time}] ${action.text} | Usuario: demo@lexa.com.ar | Recurso: Caso #${Math.floor(Math.random() * 1000)}`;
+            
+            auditLog.insertBefore(entry, auditLog.firstChild);
+            
+            // Mantener solo últimos 10 logs
+            if (auditLog.children.length > 10) {
+                auditLog.removeChild(auditLog.lastChild);
+            }
+        }, 5000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo: Pipeline ASR</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { text-align: center; color: white; margin-bottom: 40px; }
+        .header h1 { font-size: 2.5rem; margin-bottom: 10px; }
+        .back-link {
+            display: inline-block; color: white; text-decoration: none;
+            padding: 12px 24px; background: rgba(255,255,255,0.1);
+            border-radius: 50px; margin-bottom: 30px; transition: all 0.3s;
+        }
+        .back-link:hover { background: rgba(255,255,255,0.2); }
+        .panel { background: white; padding: 30px; border-radius: 20px; margin-bottom: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
+        .audio-player {
+            background: #f8fafc; padding: 20px; border-radius: 12px;
+            display: flex; align-items: center; gap: 15px;
+        }
+        .play-btn {
+            width: 60px; height: 60px; background: #d4af37;
+            border-radius: 50%; border: none; cursor: pointer;
+            color: white; font-size: 24px; transition: all 0.3s;
+        }
+        .play-btn:hover { background: #c49d2e; transform: scale(1.1); }
+        .waveform { flex: 1; height: 60px; background: #e2e8f0; border-radius: 8px; position: relative; overflow: hidden; }
+        .waveform-bar {
+            position: absolute; width: 3px; background: #1e3a8a;
+            bottom: 50%; transform: translateY(50%);
+            animation: wave 1.5s ease-in-out infinite;
+        }
+        @keyframes wave {
+            0%, 100% { height: 20%; }
+            50% { height: 80%; }
+        }
+        .transcript-box {
+            background: #1e293b; color: #e2e8f0; padding: 20px;
+            border-radius: 12px; font-family: monospace; line-height: 1.8;
+            min-height: 150px;
+        }
+        .highlight { background: rgba(212, 175, 55, 0.3); padding: 2px 4px; border-radius: 3px; }
+        .entity { padding: 3px 8px; border-radius: 6px; font-weight: 600; margin: 0 2px; }
+        .entity-person { background: #fef3c7; color: #92400e; }
+        .entity-org { background: #dbeafe; color: #1e40af; }
+        .entity-location { background: #dcfce7; color: #166534; }
+        .entity-date { background: #fce7f3; color: #9f1239; }
+        .topics { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px; }
+        .topic-badge { padding: 8px 16px; border-radius: 20px; font-weight: 600; }
+        .topic-despido { background: #fee2e2; color: #991b1b; }
+        .topic-accidente { background: #fed7aa; color: #9a3412; }
+        .topic-discriminacion { background: #e0e7ff; color: #3730a3; }
+        .progress-bar {
+            width: 100%; height: 8px; background: #e2e8f0;
+            border-radius: 4px; overflow: hidden; margin: 15px 0;
+        }
+        .progress-fill {
+            height: 100%; background: linear-gradient(90deg, #d4af37, #f4d03f);
+            width: 0%; transition: width 0.5s ease;
+        }
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px; margin-top: 20px;
+        }
+        .stat-card {
+            background: #f8fafc; padding: 20px; border-radius: 12px; text-align: center;
+        }
+        .stat-value { font-size: 2rem; font-weight: 700; color: #1e3a8a; }
+        .stat-label { color: #64748b; margin-top: 5px; font-size: 0.9rem; }
+        
+        .source-selector {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px; margin-bottom: 20px;
+        }
+        .source-card {
+            background: #f8fafc; padding: 20px; border-radius: 12px;
+            cursor: pointer; border: 2px solid transparent;
+            transition: all 0.3s ease; text-align: center;
+        }
+        .source-card:hover {
+            border-color: #d4af37; transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(212, 175, 55, 0.2);
+        }
+        .source-card.active {
+            border-color: #d4af37; background: #fffbeb;
+        }
+        .source-icon { font-size: 2rem; margin-bottom: 10px; }
+        .source-name { font-weight: 600; color: #1e3a8a; margin-bottom: 5px; }
+        .source-desc { font-size: 0.85rem; color: #64748b; }
+        
+        .upload-area {
+            background: #f8fafc; padding: 40px; border-radius: 12px;
+            border: 2px dashed #cbd5e1; text-align: center;
+            cursor: pointer; transition: all 0.3s ease;
+        }
+        .upload-area:hover {
+            border-color: #d4af37; background: #fffbeb;
+        }
+        .upload-area.dragover {
+            border-color: #d4af37; background: #fffbeb;
+            transform: scale(1.02);
+        }
+        .upload-icon { font-size: 3rem; margin-bottom: 15px; color: #64748b; }
+        .upload-text { font-size: 1.1rem; font-weight: 600; color: #1e3a8a; margin-bottom: 5px; }
+        .upload-hint { font-size: 0.9rem; color: #64748b; }
+        
+        audio { width: 100%; margin: 15px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-link">← Volver al inicio</a>
+        <div class="header">
+            <h1>🎙️ Demo: Pipeline ASR</h1>
+            <p>Transcripción automática con OpenAI Whisper + NLP para clasificación</p>
+        </div>
+
+        <div class="panel">
+            <h2 style="margin-bottom: 20px;">� Selecciona Fuente de Audio</h2>
+            
+            <h3 style="margin-bottom: 15px; color: #1e3a8a;">🎙️ Radios en Vivo</h3>
+            <div class="source-selector">
+                <div class="source-card" onclick="selectRadio('nacional', 'http://sa.mp3.icecast.magma.edge-access.net:7200/sc_rad1')">
+                    <div class="source-icon">📻</div>
+                    <div class="source-name">Radio Nacional</div>
+                    <div class="source-desc">AM 870 - En vivo</div>
+                </div>
+                
+                <div class="source-card" onclick="selectRadio('continental', 'http://streamconti.conectarmedios.com.ar/continental')">
+                    <div class="source-icon">🎙️</div>
+                    <div class="source-name">Continental</div>
+                    <div class="source-desc">AM 590 - En vivo</div>
+                </div>
+                
+                <div class="source-card" onclick="selectRadio('mitre', 'http://sa.mp3.icecast.magma.edge-access.net:7200/sc_rad37')">
+                    <div class="source-icon">📡</div>
+                    <div class="source-name">Radio Mitre</div>
+                    <div class="source-desc">AM 790 - En vivo</div>
+                </div>
+                
+                <div class="source-card" onclick="selectRadio('rivadavia', 'http://sa.mp3.icecast.magma.edge-access.net:7200/sc_rad39')">
+                    <div class="source-icon">🔊</div>
+                    <div class="source-name">Rivadavia</div>
+                    <div class="source-desc">AM 630 - En vivo</div>
+                </div>
+                
+                <div class="source-card" onclick="selectRadio('convos', 'http://sa.mp3.icecast.magma.edge-access.net:7200/sc_rad58')">
+                    <div class="source-icon">🎵</div>
+                    <div class="source-name">Con Vos</div>
+                    <div class="source-desc">FM 89.9 - En vivo</div>
+                </div>
+                
+                <div class="source-card" onclick="selectRadio('metro', 'http://sa.mp3.icecast.magma.edge-access.net:7200/sc_rad38')">
+                    <div class="source-icon">🌟</div>
+                    <div class="source-name">Metro 95.1</div>
+                    <div class="source-desc">FM 95.1 - En vivo</div>
+                </div>
+                
+                <div class="source-card" onclick="selectRadio('la100', 'http://stream.arcast.com.ar:8084/radio.mp3')">
+                    <div class="source-icon">🎶</div>
+                    <div class="source-name">La 100</div>
+                    <div class="source-desc">FM 99.9 - En vivo</div>
+                </div>
+                
+                <div class="source-card" onclick="selectRadio('pop', 'http://sa.mp3.icecast.magma.edge-access.net:7200/sc_rad36')">
+                    <div class="source-icon">🎧</div>
+                    <div class="source-name">Pop Radio</div>
+                    <div class="source-desc">FM 101.5 - En vivo</div>
+                </div>
+                
+                <div class="source-card" onclick="selectRadio('cnn', 'http://28463.live.streamtheworld.com/RADIOCNNAAC_SC')">
+                    <div class="source-icon">📰</div>
+                    <div class="source-name">CNN Radio</div>
+                    <div class="source-desc">FM 88.7 - Noticias</div>
+                </div>
+                
+                <div class="source-card" onclick="selectRadio('mega', 'http://stream.arcast.com.ar:9246/live')">
+                    <div class="source-icon">🔥</div>
+                    <div class="source-name">Mega 98.3</div>
+                    <div class="source-desc">FM 98.3 - En vivo</div>
+                </div>
+                
+                <div class="source-card" onclick="selectRadio('rock', 'http://sa.mp3.icecast.magma.edge-access.net:7200/sc_rad35')">
+                    <div class="source-icon">🎸</div>
+                    <div class="source-name">Rock & Pop</div>
+                    <div class="source-desc">FM 95.9 - En vivo</div>
+                </div>
+                
+                <div class="source-card" onclick="selectRadio('aspen', 'http://stream2.arcast.com.ar:8082/radio.mp3')">
+                    <div class="source-icon">⛷️</div>
+                    <div class="source-name">Aspen</div>
+                    <div class="source-desc">FM 102.3 - En vivo</div>
+                </div>
+                
+                <div class="source-card" onclick="selectRadio('vorterix', 'http://server.ohradio.com.ar:9698/live')">
+                    <div class="source-icon">🌀</div>
+                    <div class="source-name">Vorterix</div>
+                    <div class="source-desc">FM 92.1 - En vivo</div>
+                </div>
+                
+                <div class="source-card" onclick="selectRadio('am750', 'http://streamconti.conectarmedios.com.ar/am750')">
+                    <div class="source-icon">🗣️</div>
+                    <div class="source-name">Radio AM 750</div>
+                    <div class="source-desc">AM 750 - En vivo</div>
+                </div>
+                
+                <div class="source-card" onclick="selectRadio('disney', 'http://stream.arcast.com.ar:8000/radiodisney.mp3')">
+                    <div class="source-icon">✨</div>
+                    <div class="source-name">Disney</div>
+                    <div class="source-desc">FM 94.3 - En vivo</div>
+                </div>
+                
+                <div class="source-card" onclick="selectRadio('del-plata', 'http://streaming2.locucionar.com:9000/stream')">
+                    <div class="source-icon">🌊</div>
+                    <div class="source-name">Del Plata</div>
+                    <div class="source-desc">AM 1030 - En vivo</div>
+                </div>
+            </div>
+
+            <h3 style="margin: 30px 0 15px 0; color: #1e3a8a;">📁 O Sube tu Audio</h3>
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">🎧</div>
+                <div class="upload-text">Arrastra tu archivo de audio aquí</div>
+                <div class="upload-hint">o haz click para seleccionar (MP3, WAV, M4A, OGG)</div>
+                <input type="file" id="audioFile" accept="audio/*" style="display: none;" onchange="handleFileUpload(event)">
+            </div>
+        </div>
+
+        <div class="panel" id="playerPanel" style="display: none;">
+            <h2 style="margin-bottom: 20px;">🎧 Reproduciendo</h2>
+            <div style="background: #f8fafc; padding: 20px; border-radius: 12px;">
+                <div id="sourceInfo" style="font-weight: 600; margin-bottom: 15px; color: #1e3a8a;"></div>
+                <audio id="audioPlayer" controls></audio>
+                <div style="margin-top: 15px; text-align: center;">
+                    <button onclick="startTranscription()" style="background: #d4af37; color: white; border: none; padding: 15px 40px; border-radius: 50px; font-weight: 600; cursor: pointer; font-size: 1rem; transition: all 0.3s;">
+                        🎙️ Iniciar Transcripción
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2 style="margin-bottom: 20px;">�📻 Programa de Radio Detectado</h2>
+            <div class="audio-player">
+                <button class="play-btn" onclick="startTranscription()">▶</button>
+                <div style="flex: 1;">
+                    <div style="font-weight: 600; margin-bottom: 5px;">Radio Continental - Cada Mañana</div>
+                    <div style="color: #64748b; font-size: 0.9rem;">Duración: 3:42 | Formato: MP3 | 192kbps</div>
+                </div>
+                <div class="waveform" id="waveform"></div>
+            </div>
+        </div>
+
+        <div class="panel" id="transcriptionPanel" style="display: none;">
+            <h2 style="margin-bottom: 15px;">📝 Transcripción en Tiempo Real</h2>
+            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                <div style="font-weight: 600;">Estado:</div>
+                <div id="statusText" style="color: #d4af37;">Procesando audio...</div>
+                <div class="progress-bar" style="flex: 1;">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+            <div class="transcript-box" id="transcriptBox">
+                <div style="opacity: 0.5;">Iniciando transcripción con Whisper...</div>
+            </div>
+        </div>
+
+        <div class="panel" id="nlpPanel" style="display: none;">
+            <h2 style="margin-bottom: 20px;">🧠 Análisis NLP Avanzado</h2>
+            
+            <h3 style="margin-bottom: 10px;">👥 Entidades Detectadas (NER)</h3>
+            <div id="entitiesBox" style="line-height: 2;"></div>
+
+            <h3 style="margin-top: 25px; margin-bottom: 10px;">🏷️ Clasificación de Tópicos</h3>
+            <div class="topics" id="topicsBox"></div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value">96%</div>
+                    <div class="stat-label">Confianza WER</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">18</div>
+                    <div class="stat-label">Entidades Extraídas</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">4</div>
+                    <div class="stat-label">Tópicos Detectados</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">92%</div>
+                    <div class="stat-label">Relevancia Legal</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel" id="vectorPanel" style="display: none;">
+            <h2 style="margin-bottom: 20px;">🔍 Búsqueda Semántica (Vector Embeddings)</h2>
+            <p style="color: #64748b; margin-bottom: 15px;">Contenido similar encontrado en la base de datos:</p>
+            
+            <div style="background: #f8fafc; padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 4px solid #d4af37;">
+                <div style="font-weight: 600; margin-bottom: 5px;">Radio Mitre - El Club del Moro (Similitud: 94%)</div>
+                <div style="color: #64748b; font-size: 0.9rem;">Caso similar de despido por embarazo en sector retail</div>
+            </div>
+
+            <div style="background: #f8fafc; padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 4px solid #c49d2e;">
+                <div style="font-weight: 600; margin-bottom: 5px;">La Nación+ - Economía (Similitud: 89%)</div>
+                <div style="color: #64748b; font-size: 0.9rem;">Análisis sobre derechos laborales en empleadas domésticas</div>
+            </div>
+
+            <div style="background: #f8fafc; padding: 15px; border-radius: 10px; border-left: 4px solid #b38c28;">
+                <div style="font-weight: 600; margin-bottom: 5px;">C5N - El Diario (Similitud: 87%)</div>
+                <div style="color: #64748b; font-size: 0.9rem;">Despidos masivos en cadena de supermercados</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentSource = null;
+        let audioPlayer = null;
+
+        // Crear waveform visual
+        for (let i = 0; i < 60; i++) {
+            const bar = document.createElement('div');
+            bar.className = 'waveform-bar';
+            bar.style.left = (i * 1.67) + '%';
+            bar.style.height = (Math.random() * 60 + 20) + '%';
+            bar.style.animationDelay = (Math.random() * 1.5) + 's';
+            document.getElementById('waveform').appendChild(bar);
+        }
+
+        // Seleccionar radio
+        function selectRadio(name, streamUrl) {
+            currentSource = { type: 'radio', name: name, url: streamUrl };
+            
+            // Actualizar UI
+            document.querySelectorAll('.source-card').forEach(card => card.classList.remove('active'));
+            event.target.closest('.source-card').classList.add('active');
+            
+            // Mostrar player
+            const playerPanel = document.getElementById('playerPanel');
+            const sourceInfo = document.getElementById('sourceInfo');
+            audioPlayer = document.getElementById('audioPlayer');
+            
+            const radioNames = {
+                'nacional': 'Radio Nacional AM 870',
+                'continental': 'Continental AM 590',
+                'mitre': 'Radio Mitre AM 790',
+                'rivadavia': 'Rivadavia AM 630',
+                'convos': 'Con Vos FM 89.9',
+                'metro': 'Metro FM 95.1',
+                'la100': 'La 100 FM 99.9',
+                'pop': 'Pop Radio FM 101.5',
+                'cnn': 'CNN Radio FM 88.7',
+                'mega': 'Mega FM 98.3',
+                'rock': 'Rock & Pop FM 95.9',
+                'aspen': 'Aspen FM 102.3',
+                'vorterix': 'Vorterix FM 92.1',
+                'am750': 'Radio AM 750',
+                'disney': 'Disney FM 94.3',
+                'del-plata': 'Del Plata AM 1030'
+            };
+            
+            sourceInfo.innerHTML = `📻 <strong>${radioNames[name]}</strong> - Transmisión en vivo`;
+            audioPlayer.src = streamUrl;
+            playerPanel.style.display = 'block';
+            playerPanel.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Upload de archivo
+        const uploadArea = document.getElementById('uploadArea');
+        const audioFile = document.getElementById('audioFile');
+
+        uploadArea.addEventListener('click', () => audioFile.click());
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('audio/')) {
+                handleFile(file);
+            } else {
+                alert('Por favor, sube un archivo de audio válido');
+            }
+        });
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (file) handleFile(file);
+        }
+
+        function handleFile(file) {
+            currentSource = { type: 'file', name: file.name, file: file };
+            
+            // Actualizar UI
+            document.querySelectorAll('.source-card').forEach(card => card.classList.remove('active'));
+            
+            // Mostrar player
+            const playerPanel = document.getElementById('playerPanel');
+            const sourceInfo = document.getElementById('sourceInfo');
+            audioPlayer = document.getElementById('audioPlayer');
+            
+            sourceInfo.innerHTML = `📁 <strong>${file.name}</strong> (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+            
+            // Crear URL para el archivo
+            const fileURL = URL.createObjectURL(file);
+            audioPlayer.src = fileURL;
+            
+            playerPanel.style.display = 'block';
+            playerPanel.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function startTranscription() {
+            if (!currentSource) {
+                alert('Por favor, selecciona una fuente de audio primero');
+                return;
+            }
+
+            // Mostrar panel de transcripción
+            document.getElementById('transcriptionPanel').style.display = 'block';
+            document.getElementById('transcriptionPanel').scrollIntoView({ behavior: 'smooth' });
+            
+            // Transcripciones diferentes según la fuente
+            const transcripts = {
+                'nacional': `En este momento el <span class="entity entity-person">Presidente de la Nación</span> anuncia nuevas medidas económicas. El <span class="entity entity-org">Ministerio de Economía</span> confirmó que la inflación de <span class="entity entity-date">enero</span> fue del <span class="highlight">15.3%</span>, mientras que el <span class="entity entity-org">INDEC</span> reporta una caída del empleo registrado del <span class="highlight">2.8%</span>. En <span class="entity entity-location">Buenos Aires</span>, los sindicatos convocaron a paro general para el próximo <span class="entity entity-date">jueves 15</span>. La <span class="entity entity-org">CGT</span> reclama aumento salarial y mejores condiciones laborales. Según datos oficiales, más de <span class="highlight">350.000 trabajadores</span> fueron afectados por despidos en los últimos <span class="entity entity-date">6 meses</span>.`,
+                
+                'continental': `Buenos días, estamos con <span class="entity entity-person">María González</span>, quien nos cuenta su caso. María trabajaba en <span class="entity entity-org">Supermercados La Estrella</span> hace <span class="entity entity-date">8 años</span> como cajera. Cuando comunicó su embarazo, recibió el telegrama de despido. Su abogada, la <span class="entity entity-person">Dra. Patricia Rodríguez</span>, presentó demanda en <span class="entity entity-location">tribunales de San Isidro</span>. El reclamo es de <span class="highlight">$4.5 millones</span> por indemnización agravada más daño moral. María está en situación vulnerable con un bebé de <span class="entity entity-date">3 meses</span> sin ingresos.`,
+                
+                'mitre': `El <span class="entity entity-person">Dr. Jorge Fernández</span> del <span class="entity entity-org">Estudio Jurídico Fernández & Asociados</span> analiza los últimos fallos judiciales en materia laboral. Recientemente la <span class="entity entity-org">Corte Suprema</span> ratificó que los despidos durante licencias médicas son nulos. En <span class="entity entity-location">Córdoba</span>, un trabajador ganó un juicio por <span class="highlight">$8.2 millones</span> contra una empresa automotriz. El caso sentó jurisprudencia sobre accidentes laborales y responsabilidad patronal. Según el <span class="entity entity-org">Ministerio de Trabajo</span>, los reclamos laborales aumentaron un <span class="highlight">47%</span> en <span class="entity entity-date">2025</span>.`,
+                
+                'rivadavia': `Desde <span class="entity entity-location">La Plata</span>, el gremio de <span class="entity entity-org">ATE</span> denuncia despidos masivos en el sector público. El delegado <span class="entity entity-person">Carlos Martínez</span> afirma que más de <span class="highlight">1,200 empleados</span> fueron cesanteados sin indemnización. La <span class="entity entity-org">Secretaría de Trabajo</span> intervino y ordenó la suspensión de los despidos. Según fuentes sindicales, los trabajadores tienen en promedio <span class="entity entity-date">15 años</span> de antigüedad. La Justicia otorgó medidas cautelares en <span class="highlight">320 casos</span>. Las audiencias de conciliación comenzarán el próximo <span class="entity entity-date">lunes</span>.`,
+                
+                'am750': `El abogado laboralista <span class="entity entity-person">Ricardo Gómez</span> explica los nuevos derechos de trabajadores de plataformas digitales. La <span class="entity entity-org">Cámara Nacional del Trabajo</span> falló a favor de un repartidor de <span class="entity entity-org">Pedidos Ya</span> otorgándole indemnización por <span class="highlight">$2.3 millones</span>. El precedente es clave para miles de trabajadores en <span class="entity entity-location">Argentina</span>. La Justicia reconoció la relación de dependencia encubierta. Expertos estiman que podrían presentarse más de <span class="highlight">50,000 demandas</span> similares en los próximos <span class="entity entity-date">12 meses</span>.`,
+                
+                'cnn': `Última hora: La <span class="entity entity-org">Inspección General de Justicia</span> investiga irregularidades en despidos colectivos de <span class="entity entity-org">Techno Solutions SA</span>. La empresa con sede en <span class="entity entity-location">Puerto Madero</span> despidió a <span class="highlight">480 empleados</span> sin autorización del <span class="entity entity-org">Ministerio de Trabajo</span>. El <span class="entity entity-person">Dr. Sebastián Torres</span> representante de los trabajadores, solicitó la nulidad de todos los despidos. Los afectados tienen entre <span class="entity entity-date">5 y 20 años</span> de antigüedad. El monto total en demandas supera los <span class="highlight">$120 millones</span>.`
+            };
+
+            // Seleccionar transcripción según fuente o usar una por defecto
+            const sourceName = currentSource.name;
+            let transcript = transcripts[sourceName] || transcripts['continental']; // Continental como default
+            
+            // Si es archivo subido, generar una transcripción genérica
+            if (currentSource.type === 'file') {
+                transcript = `Analizando el archivo <span class="highlight">${currentSource.name}</span>. Detectamos contenido relacionado con conflictos laborales en <span class="entity entity-location">Argentina</span>. Se mencionan casos de despidos, negociaciones colectivas y reclamos ante el <span class="entity entity-org">Ministerio de Trabajo</span>. Los montos involucrados rondan entre <span class="highlight">$1.5 millones</span> y <span class="highlight">$6 millones</span>. Se identificaron <span class="highlight">12 actores</span> diferentes incluyendo trabajadores, abogados, empresas y organismos públicos. El audio tiene una duración aproximada de <span class="entity entity-date">3 minutos 42 segundos</span>.`;
+            }
+
+            // Simular progreso
+            let progress = 0;
+            const progressBar = document.getElementById('progressFill');
+            const statusText = document.getElementById('statusText');
+            const transcriptBox = document.getElementById('transcriptBox');
+            
+            const sourceType = currentSource.type === 'radio' ? '📻 Radio en vivo' : '📁 Archivo subido';
+            transcriptBox.innerHTML = `<div style="opacity: 0.5;">Procesando ${sourceType}: ${currentSource.name}...</div>`;
+            
+            const interval = setInterval(() => {
+                progress += 5;
+                progressBar.style.width = progress + '%';
+                
+                if (progress === 30) {
+                    statusText.textContent = 'Separando voces con diarización...';
+                    transcriptBox.innerHTML = '🎙️ Detectando: 2 hablantes (mujer 1, mujer 2)';
+                }
+                if (progress === 60) {
+                    statusText.textContent = 'Transcribiendo con Whisper...';
+                    transcriptBox.innerHTML = 'Buenos días, estamos con María González...';
+                }
+                if (progress === 100) {
+                    clearInterval(interval);
+                    statusText.textContent = '✓ Transcripción completada';
+                    transcriptBox.innerHTML = transcript;
+                    
+                    // Mostrar análisis NLP
+                    setTimeout(() => {
+                        document.getElementById('nlpPanel').style.display = 'block';
+                        showNLPResults();
+                    }, 500);
+                    
+                    // Mostrar búsqueda semántica
+                    setTimeout(() => {
+                        document.getElementById('vectorPanel').style.display = 'block';
+                    }, 1500);
+                }
+            }, 100);
+        }
+
+        function showNLPResults() {
+            document.getElementById('entitiesBox').innerHTML = `
+                <span class="entity entity-person">María González</span>
+                <span class="entity entity-person">Dra. Patricia Rodríguez</span>
+                <span class="entity entity-org">Supermercados La Estrella</span>
+                <span class="entity entity-org">Estudio Jurídico Rodríguez & Asociados</span>
+                <span class="entity entity-location">San Isidro</span>
+                <span class="entity entity-date">8 años</span>
+                <span class="entity entity-date">2 días</span>
+                <span class="entity entity-date">14 meses</span>
+                <span class="entity entity-date">3 meses</span>
+            `;
+
+            document.getElementById('topicsBox').innerHTML = `
+                <div class="topic-badge topic-despido">Despido Discriminatorio</div>
+                <div class="topic-badge topic-accidente">Violación Ley 20.744</div>
+                <div class="topic-badge topic-discriminacion">Embarazo</div>
+                <div class="topic-badge" style="background: #fef3c7; color: #92400e;">Conciliación Fallida</div>
+            `;
+        }
+    </script>
+</body>
+</html>
